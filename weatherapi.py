@@ -1,34 +1,41 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,render_template
 import requests
+
 app = Flask(__name__)
+api_key = 'deaaf96028e66a40ac696e859a350780'
 
-@app.route('/weather', methods=['GET'])
-def get_weather():
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/weather', methods=['POST'])
+def weather():
+    city = request.form['city']
+    weather_data = get_weather(city, api_key)
+    return render_template('index.html', weather_data=weather_data)
+
+
+def get_weather(city, api_key):
+
+  url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
+  
+  response = requests.get(url)
     
-  location = request.args.get('location')
-  if location:
-
-    # Make a request to a weather API (in this case, OpenWeatherMap API)
-    api_key = 'deaaf96028e66a40ac696e859a350780'  # Replace with your actual API key
-    url = f'http://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}'
-
-    response = requests.get(url)
+  # location = request.args.get('location')
+  if response.status_code ==200:
     data = response.json()
-
-    # Extract the relevant weather information
-    temperature = data.get('main', {}).get('temp')
-    description = data['weather'][0]['description']
 
     # Prepare the response
     weather_data = {
-        'location': location,
-        'temperature': temperature,
-        'description': description
+        'city': data['name'],
+        'temperature': data ['main']['temp'],
+        'description': data ['weather'][0]['description'],
+        'icon':data ['weather'][0]['icon']
     }
 
-    return jsonify(weather_data)
+    return weather_data
   else:
-   return jsonify({"error": "Invalid location provided"}), 400
+   return None
 
 if __name__ == '__main__':
     app.run()
