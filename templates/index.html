@@ -1,25 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Weather App</title>
+    <title>Global Weather Data | GWD</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="/">Global Weather Data</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <form class="form-inline my-2 my-lg-0" method="post" action="/">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search for a city" aria-label="Search" name="city">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                <select name="units" class="form-control ml-2">
+                    <option value="metric">°C</option>
+                    <option value="imperial">°F</option>
+                </select>
+            </form>
+            {% if weather_data %}
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <span class="navbar-text mr-2">{{ weather_data.city }}</span>
+                </li>
+                <li class="nav-item">
+                    <img src="http://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="Weather icon" class="nav-icon">
+                </li>
+                <li class="nav-item">
+                    <span class="navbar-text ml-2">{{ weather_data.temperature }}°{{ units == 'metric' and 'C' or 'F' }}</span>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </nav>
     <div class="container mt-5">
-        <h1 class="text-center">Weather App</h1>
-        <form method="post" action="/weather" class="form-inline justify-content-center">
-            <input type="text" name="city" placeholder="Enter city" class="form-control mb-2 mr-sm-2">
-            <button type="submit" class="btn btn-primary mb-2">Get Weather</button>
-        </form>
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
         {% if weather_data %}
-        <div class="weather-result mt-4 text-center">
-            <h2>Weather in {{ weather_data.city }}</h2>
-            <p class="lead">Temperature: {{ weather_data.temperature }} °C</p>
-            <p>Description: {{ weather_data.description }}</p>
-            <img src="http://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="Weather icon">
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card weather-card">
+
+                    <h2>Current Weather</h2>
+                    <h3>{{ weather_data.city }}</h3>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <img src="http://openweathermap.org/img/w/{{ weather_data.icon }}.png" alt="Weather icon" class="weather-icon">
+                        <div class="ml-3">
+                            <p class="temperature">{{ weather_data.temperature }} °{{ units == 'metric' and 'C' or 'F' }}</p>
+                        </div>
+                        <div class="weather-details">
+                            <p>Feels: {{ weather_data.feels_like }} °{{ units == 'metric' and 'C' or 'F' }} </p>
+                            <p>Humidity:  {{ weather_data.humidity }}%</p>
+                            <br>
+                            <p> Wind: {{ weather_data.wind_speed }} {{ units == 'metric' and 'm/s' or 'mph' }}</p>
+                            <p>Description: {{ weather_data.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-center">Temperature</h2>
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card forecast-card">
+                    <div class="card-body">
+                        <h2 class="card-title text-center">10 Day Forecast</h2>
+                        <div class="row">
+                            {% for entry in forecast_data %}
+                            <div class="col-md-2">
+                                <div class="forecast-entry text-center">
+                                    <p>{{ entry.date }}</p>
+                                    <p>High: {{ entry.high_temperature }} °{{ units == 'metric' and 'C' or 'F' }}</p>
+                                    <p>Low: {{ entry.low_temperature }} °{{ units == 'metric' and 'C' or 'F' }}</p>
+                                    <img src="http://openweathermap.org/img/w/{{ entry.icon }}.png" alt="Weather icon">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {%else%}
+        <div class="msg">
+            <h1 class="greeting"> {{greeting}}</h1>
+            <p class="instruct">Please enter a City in the search menu </p>
         </div>
         {% endif %}
     </div>
@@ -27,5 +108,48 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+        {% if forecast_data %}
+        const forecastData = {{ forecast_data | tojson }};
+        const labels = forecastData.map(entry => entry.date);
+        const temperatures = forecastData.map(entry => entry.high_temperature);
+
+        const ctx = document.getElementById('temperatureChart').getContext('2d');
+        const temperatureChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'High Temperature',
+                    data: temperatures,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: `Temperature (°{{ units == 'metric' and 'C' or 'F' }})`
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+    <footer>
+        &copy; {{ current_year }} weather app designed by HIT H230932G
+    </footer>
 </body>
 </html>

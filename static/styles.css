@@ -6,9 +6,93 @@ h1 {
     color: #007bff;
 }
 
-.weather-result {
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255,255,255,.75);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: rgba(255,255,255,1);
+}
+
+.navbar-text {
+    color: rgba(255,255,255,.75);
+}
+
+.navbar-text:hover {
+    color: rgba(255,255,255,1);
+}
+
+.nav-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.card {
+    margin-bottom: 20px;
+}
+.weather-icon {
+    width: 100px;
+    height: 100px;
+}
+.temperature {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.weather-details {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+.weather-detail {
+    text-align: center;
+}
+
+body{
+    background-image: url("./images/forest-fog.jpg");
+    background-size: cover; 
+    /* background-position: center;  */
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.weather-card, .forecast-card {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.greeting{
+    
+    color: #333;
+    margin-bottom: 10px;
+    text-size-adjust: 50;
+}
+.instruct{
+    text-size-adjust: 10;
+}
+
+.msg{
+    text-align: center;
+}
+.forecast-entry {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+button {
+    margin: 10px 0;
+}
+
+footer {
+    
+    padding: 10px;
+    text-align: center;
+    bottom: 0;
 }
